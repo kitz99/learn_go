@@ -2,35 +2,36 @@ package main
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
 
-// Location represents a description for an element from Sitemap
-type Location struct {
-	Loc string `xml:"loc"`
-}
-
 // SitemapIndex is the abdtract parsed form of xml sitemap
 type SitemapIndex struct {
-	Locations []Location `xml:"sitemap"` // A slice
+	Locations []string `xml:"sitemap>loc"` // A slice
 }
 
-func (l Location) String() string {
-	return fmt.Sprintf(l.Loc)
+// News structure
+type News struct {
+	Title    []string `xml:"url>news>title"`
+	Keywords []string `xml:"url>news>keywords"`
+	Location []string `xml:"url>loc"`
 }
 
 func main() {
+	var s SitemapIndex
+	var n News
+
 	response, _ := http.Get("https://www.washingtonpost.com/news-sitemap-index.xml")
 	bytes, _ := ioutil.ReadAll(response.Body)
 	response.Body.Close()
-
-	var s SitemapIndex
 	xml.Unmarshal(bytes, &s)
 
 	// fmt.Println(s.Locations)
-	for _, Location := range s.Locations { // range returns index, object
-		fmt.Printf("\n%s", Location)
+	for _, location := range s.Locations { // range returns index, object
+		response, _ := http.Get(location)
+		bytes, _ := ioutil.ReadAll(response.Body)
+		response.Body.Close()
+		xml.Unmarshal(bytes, &n)
 	}
 }
